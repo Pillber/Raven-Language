@@ -24,6 +24,15 @@ internal impl Cast<str> for char {
 }
 
 
+impl Cast<str> for u64 {
+    pub fn cast(self) -> str {
+        let test = "";
+        return "test_string";
+    }
+
+}
+
+
 internal impl Add<str, str> for str {
     pub fn add(self, other: str) -> str {
 
