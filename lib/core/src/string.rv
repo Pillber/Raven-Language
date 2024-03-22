@@ -26,7 +26,7 @@ internal impl Cast<str> for char {
 
 impl Cast<str> for u64 {
     pub fn cast(self) -> str {
-        let test = "";
+        //let test = 1 + '0';
         return "test_string";
     }
 
