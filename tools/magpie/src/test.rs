@@ -1,13 +1,10 @@
 #[cfg(test)]
 mod test {
-    use crate::build;
-    use parser::FileSourceSet;
     use data::{Arguments, CompilerArguments, RunnerSettings};
-    use std::{env, path, fs};
+    use magpie_lib::build_project;
+    use parser::FileSourceSet;
     use std::path::PathBuf;
-
-    /// Tests directory
-    //static TESTS: str = "../lib/test/test:";
+    use std::{env, fs, path};
 
     /// Main test
     #[test]
@@ -19,16 +16,17 @@ mod test {
     /// Recursively searches for files in the test folder to run as a test
     fn test_recursive(path: PathBuf) {
         for entry in fs::read_dir(path).unwrap() {
-
             let entry = entry.unwrap();
             let path = entry.path();
-            if path.is_file() { // supposedly, this is a test file
+            if path.is_file() {
+                // supposedly, this is a test file
                 let mod_path = path.to_str().unwrap().replace(path::MAIN_SEPARATOR, "::");
                 if !mod_path.ends_with(".rv") {
                     println!("File {} doesn't have the right file extension!", mod_path);
                     continue;
                 }
-                let mod_path = format!("{}::test", &mod_path[path.parent().unwrap().to_str().unwrap().len()+6..mod_path.len() - 3]);
+                let mod_path =
+                    format!("{}::test", &mod_path[path.parent().unwrap().to_str().unwrap().len() + 6..mod_path.len() - 3]);
                 println!("Running {}", mod_path);
                 let mut arguments = Arguments::build_args(
                     false,
@@ -42,8 +40,8 @@ mod test {
                     },
                 );
 
-                match build::<bool>(&mut arguments, vec![Box::new(FileSourceSet { root: path })]) {
-                    Ok(inner) => match inner {
+                match build_project::<bool>(&mut arguments, &mut vec![Box::new(FileSourceSet { root: path })], true) {
+                    Ok((_, inner)) => match inner {
                         Some(found) => {
                             if !found {
                                 assert!(false, "Failed test {}!", mod_path)
@@ -53,7 +51,8 @@ mod test {
                     },
                     Err(()) => assert!(false, "Failed to compile test {}!", mod_path),
                 }
-            } else if path.is_dir() { // supposedly, this is a sub-directory in the test folder
+            } else if path.is_dir() {
+                // supposedly, this is a sub-directory in the test folder
                 test_recursive(path);
             } else {
                 println!("Unknown element in test folder!");
