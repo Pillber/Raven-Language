@@ -26,8 +26,13 @@ internal impl Cast<str> for char {
 
 impl Cast<str> for u64 {
     pub fn cast(self) -> str {
-        //let test = 1 + '0';
-        return "test_string";
+        let output = "";
+        let digit = (self % 10);
+        let char_digit = '0' + digit;
+        self /= 10;
+        // cant do below line because infinite loop can't find impl for char + string
+        //output = char_digit + output;
+        return output;
     }
 
 }
@@ -42,6 +47,11 @@ internal impl Add<str, str> for str {
 internal impl Add<str, char> for str {
     pub fn add(self, other: char) -> str {
 
+    }
+}
+
+internal impl Add<char, str> for char {
+    pub fn add(self, other: str) -> str {
     }
 }
 

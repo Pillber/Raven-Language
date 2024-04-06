@@ -205,6 +205,8 @@ pub fn string_internal<'ctx>(
             )
             .unwrap();
         type_getter.compiler.builder.build_return(Some(&malloc.as_basic_value_enum())).unwrap();
+    } else if name.starts_with("string::Add<char + str>_char::add") {
+        return true;
     } else {
         return false;
     }
