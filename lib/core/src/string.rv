@@ -26,13 +26,14 @@ internal impl Cast<str> for char {
 
 impl Cast<str> for u64 {
     pub fn cast(self) -> str {
-        let output = "";
-        let digit = (self % 10);
-        let char_digit = '0' + digit;
-        self /= 10;
+        //let output = "";
+        //let digit = (self % 10);
+        //let char_digit = '0' + digit;
+        //self /= 10;
         // cant do below line because infinite loop can't find impl for char + string
         //output = char_digit + output;
-        return output;
+        //return output;
+        return 'a' + "bomba";
     }
 
 }

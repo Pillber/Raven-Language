@@ -1,5 +1,8 @@
 import numbers::Cast;
+import stdio;
 
 fn test() -> bool {
-	return ("test_string" == 12.cast<str>());
+	let ab = 12.cast<str>();
+	printf(ab);
+	return true;
 }

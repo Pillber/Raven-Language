@@ -227,7 +227,7 @@ pub fn string_internal<'ctx>(
         let total = type_getter
             .compiler
             .builder
-            .build_int_add(length, type_getter.compiler.context.i64_type().const_int(1, false), "4")
+            .build_int_add(length, type_getter.compiler.context.i64_type().const_int(2, false), "4")
             .unwrap();
         // allocate memory for new string
         let malloc = type_getter
@@ -247,13 +247,11 @@ pub fn string_internal<'ctx>(
             .unwrap_left()
             .into_pointer_value();
         // add one to malloc, to move str into malloc[1], not malloc[0]
-        
         let plus_one;
         unsafe {
             plus_one = type_getter
                 .compiler
                 .builder
-                // need to cast malloc to int before adding
                 .build_in_bounds_gep(malloc, &[type_getter.compiler.context.i64_type().const_int(1, false)], "9")
                 .unwrap();
         }
@@ -269,7 +267,7 @@ pub fn string_internal<'ctx>(
                     .unwrap_or_else(|| compile_llvm_intrinsics("strcpy", type_getter)),
                 &[
                     // change this to malloc + 1? this puts string at 0, we need at 1
-                    BasicMetadataValueEnum::PointerValue(plus_one),
+                    BasicMetadataValueEnum::PointerValue(malloc),
                     BasicMetadataValueEnum::PointerValue(value.get_params().get(1).unwrap().into_pointer_value()),
                 ],
                 "6",
@@ -295,7 +293,6 @@ pub fn string_internal<'ctx>(
         // no need to add escape character, as strcpy should have already moved it
         // finish instruction
         type_getter.compiler.builder.build_return(Some(&malloc.as_basic_value_enum())).unwrap();
-        return true;
     } else {
         return false;
     }
