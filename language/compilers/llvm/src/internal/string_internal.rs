@@ -206,6 +206,95 @@ pub fn string_internal<'ctx>(
             .unwrap();
         type_getter.compiler.builder.build_return(Some(&malloc.as_basic_value_enum())).unwrap();
     } else if name.starts_with("string::Add<char + str>_char::add") {
+        // get length of str
+        let length = type_getter
+            .compiler
+            .builder
+            .build_call(
+                type_getter
+                    .compiler
+                    .module
+                    .get_function("strlen")
+                    .unwrap_or_else(|| compile_llvm_intrinsics("strlen", type_getter)),
+                &[BasicMetadataValueEnum::PointerValue(value.get_params().get(1).unwrap().into_pointer_value())],
+                "0",
+            )
+            .unwrap()
+            .try_as_basic_value()
+            .unwrap_left()
+            .into_int_value();
+        // add one to str length to account for char
+        let total = type_getter
+            .compiler
+            .builder
+            .build_int_add(length, type_getter.compiler.context.i64_type().const_int(1, false), "4")
+            .unwrap();
+        // allocate memory for new string
+        let malloc = type_getter
+            .compiler
+            .builder
+            .build_call(
+                type_getter
+                    .compiler
+                    .module
+                    .get_function("malloc")
+                    .unwrap_or_else(|| compile_llvm_intrinsics("malloc", type_getter)),
+                &[BasicMetadataValueEnum::IntValue(total)],
+                "5",
+            )
+            .unwrap()
+            .try_as_basic_value()
+            .unwrap_left()
+            .into_pointer_value();
+        // add one to malloc, to move str into malloc[1], not malloc[0]
+        
+        let plus_one;
+        unsafe {
+            plus_one = type_getter
+                .compiler
+                .builder
+                // need to cast malloc to int before adding
+                .build_in_bounds_gep(malloc, &[type_getter.compiler.context.i64_type().const_int(1, false)], "9")
+                .unwrap();
+        }
+        // copy str into new memory
+        type_getter
+            .compiler
+            .builder
+            .build_call(
+                type_getter
+                    .compiler
+                    .module
+                    .get_function("strcpy")
+                    .unwrap_or_else(|| compile_llvm_intrinsics("strcpy", type_getter)),
+                &[
+                    // change this to malloc + 1? this puts string at 0, we need at 1
+                    BasicMetadataValueEnum::PointerValue(plus_one),
+                    BasicMetadataValueEnum::PointerValue(value.get_params().get(1).unwrap().into_pointer_value()),
+                ],
+                "6",
+            )
+            .unwrap()
+            .try_as_basic_value()
+            .unwrap_left()
+            .into_pointer_value();
+        // add the char to beginning of new memory
+        type_getter
+            .compiler
+            .builder
+            .build_store(
+                // change this? not &[length], but &[0]?
+                unsafe { type_getter.compiler.builder.build_in_bounds_gep(malloc, &[type_getter.compiler.context.i64_type().const_int(0, false)], "7").unwrap() },
+                type_getter
+                    .compiler
+                    .builder
+                    .build_load(value.get_params().first().unwrap().into_pointer_value(), "8")
+                    .unwrap(),
+            )
+            .unwrap();
+        // no need to add escape character, as strcpy should have already moved it
+        // finish instruction
+        type_getter.compiler.builder.build_return(Some(&malloc.as_basic_value_enum())).unwrap();
         return true;
     } else {
         return false;
