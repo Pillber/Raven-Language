@@ -206,6 +206,15 @@ pub fn string_internal<'ctx>(
             .unwrap();
         type_getter.compiler.builder.build_return(Some(&malloc.as_basic_value_enum())).unwrap();
     } else if name.starts_with("string::Add<char + str>_char::add") {
+        /*
+    	size_t str_len = strlen(str);
+	    str_len += 2;
+
+	    char* new_str = malloc(str_len);
+	    strcat(new_str, &chr);
+	    strcat(new_str, str);
+        */
+
         // get length of str
         let length = type_getter
             .compiler
