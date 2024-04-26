@@ -2,5 +2,9 @@ import numbers::Cast;
 import stdio;
 
 fn test() -> bool {
-	return true;
+	//return "12" == 12.cast<str>();
+	//return "123" == 123.cast<str>();
+	printf(987654321.cast<str>());
+	return "12397" == 12397.cast<str>();
+	//return result1;
 }
