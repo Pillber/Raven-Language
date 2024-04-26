@@ -232,7 +232,7 @@ pub fn string_internal<'ctx>(
             .try_as_basic_value()
             .unwrap_left()
             .into_int_value();
-        // add one to str length to account for char
+        // add two to str length to account for char
         let total = type_getter
             .compiler
             .builder
@@ -255,16 +255,7 @@ pub fn string_internal<'ctx>(
             .try_as_basic_value()
             .unwrap_left()
             .into_pointer_value();
-        // add one to malloc, to move str into malloc[1], not malloc[0]
-        let plus_one;
-        unsafe {
-            plus_one = type_getter
-                .compiler
-                .builder
-                .build_in_bounds_gep(malloc, &[type_getter.compiler.context.i64_type().const_int(1, false)], "9")
-                .unwrap();
-        }
-        // copy str into new memory
+        // concat the character to malloc
         type_getter
             .compiler
             .builder
@@ -272,33 +263,38 @@ pub fn string_internal<'ctx>(
                 type_getter
                     .compiler
                     .module
-                    .get_function("strcpy")
-                    .unwrap_or_else(|| compile_llvm_intrinsics("strcpy", type_getter)),
+                    .get_function("strcat")
+                    .unwrap_or_else(|| compile_llvm_intrinsics("strcat", type_getter)),
                 &[
-                    // change this to malloc + 1? this puts string at 0, we need at 1
                     BasicMetadataValueEnum::PointerValue(malloc),
-                    BasicMetadataValueEnum::PointerValue(value.get_params().get(1).unwrap().into_pointer_value()),
+                    BasicMetadataValueEnum::PointerValue(value.get_params().first().unwrap().into_pointer_value()),
                 ],
-                "6",
+                "7",
             )
             .unwrap()
             .try_as_basic_value()
             .unwrap_left()
             .into_pointer_value();
-        // add the char to beginning of new memory
+        // concat the string to the malloc
         type_getter
             .compiler
             .builder
-            .build_store(
-                // change this? not &[length], but &[0]?
-                unsafe { type_getter.compiler.builder.build_in_bounds_gep(malloc, &[type_getter.compiler.context.i64_type().const_int(0, false)], "7").unwrap() },
+            .build_call(
                 type_getter
                     .compiler
-                    .builder
-                    .build_load(value.get_params().first().unwrap().into_pointer_value(), "8")
-                    .unwrap(),
+                    .module
+                    .get_function("strcat")
+                    .unwrap_or_else(|| compile_llvm_intrinsics("strcat", type_getter)),
+                &[
+                    BasicMetadataValueEnum::PointerValue(malloc),
+                    BasicMetadataValueEnum::PointerValue(value.get_params().get(1).unwrap().into_pointer_value()),
+                ],
+                "7",
             )
-            .unwrap();
+            .unwrap()
+            .try_as_basic_value()
+            .unwrap_left()
+            .into_pointer_value();
         // no need to add escape character, as strcpy should have already moved it
         // finish instruction
         type_getter.compiler.builder.build_return(Some(&malloc.as_basic_value_enum())).unwrap();

@@ -2,7 +2,8 @@ import numbers::Cast;
 import stdio;
 
 fn test() -> bool {
-	let ab = 12.cast<str>();
-	printf(ab);
+	let a = 'a';
+	let b = "bomba";
+	printf(b);
 	return true;
 }
